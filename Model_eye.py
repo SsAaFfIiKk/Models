@@ -1,14 +1,16 @@
 import os
+import cv2
 import torch
 import pickle
 import random
+import numpy as np
 from torch import nn
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-class CNN(nn.Module):
+class CNNY(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(
@@ -125,7 +127,22 @@ def remove(path, ext1, ext2):
     dir = os.listdir(path)
     for i in dir:
         if i.endswith(ext1) or i.endswith(ext2):
-            os.remove(os.path.join(path,i))
+            os.remove(os.path.join(path, i))
+
+
+class MotionBlur(object):
+    def __call__(self, image):
+        self.size = random.randint(1, 50)
+        self.angle = random.randint(-90, 90)
+        self.k = np.zeros((self.size, self.size), dtype=np.float32)
+        self.k[(self.size - 1) // 2, :] = np.ones(self.size, dtype=np.float32)
+        self.k = cv2.warpAffine(self.k, cv2.getRotationMatrix2D((self.size / 2 -0.5, self.size / 2 -0.5),
+                                                      self.angle, 1.0), (self.size, self.size))
+        self.k = self.k * (1.0 / np.sum(self.k))
+
+        img = np.array(image)
+        img = cv2.filter2D(img, -1, self.k)
+        return Image.fromarray(img.astype(np.uint8))
 
 
 path = "D:/Python/Models/eye"
@@ -143,11 +160,10 @@ if __name__ == "__main__":
         transforms.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])])
 
     train_transform = transforms.Compose([
-        transforms.RandomApply(
-            [transforms.GaussianBlur((5, 5), sigma=(0.1, 2.0))],
-            p=5
-        ),
         transforms.Resize(64),
+        transforms.RandomApply([MotionBlur(),
+                               transforms.GaussianBlur((5, 5), sigma=(0.1, 2.0))],
+                               p=0.3),
         transforms.RandomCrop(64, padding=6),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),
@@ -155,7 +171,8 @@ if __name__ == "__main__":
         transforms.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])])
 
     path_to_dataset = "D:/Datasets/Faces"
-    paths_to_images = [os.path.join(path_to_dataset, name) for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
+    paths_to_images = [os.path.join(path_to_dataset, name)
+                       for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 
     random.seed(0)
     random.shuffle(paths_to_images)
@@ -169,14 +186,13 @@ if __name__ == "__main__":
     test_dataset = EyesDataset(paths_to_images[train_size:], test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-    cnn = CNN()
+    cnn = CNNY()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.01)
 
     epoch_num = 80
-    best_loss = 1
 
     for epoch_idx in range(epoch_num):
         print('Epoch #{}'.format(epoch_idx))
@@ -231,15 +247,7 @@ if __name__ == "__main__":
             print('---------------------')
 
             torch.save(cnn, "D:/Python/Models/eye/eye_current_" +
-                       "epoh_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
-
-            if best_loss < test_loss:
-                torch.save(cnn, "D:/Python/Models/eye/eye_best_" +
-                           "epoh_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
-                best_loss = test_loss
-
-            elif best_loss == 1:
-                best_loss = test_loss
+                       "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
     save_list("eye_train_los", train_los_list)
     save_list("eye_train_acc", train_acc_list)

@@ -17,7 +17,7 @@ def load_eye():
     print(max(train_los_list))
     print(max(train_acc_list))
     print(max(test_los_list))
-    print(max(test_acc_list))
+    print(max(test_acc_list), test_acc_list.index(max(test_acc_list)))
 
     plt.subplot(2, 2, 1)
     plt.plot(x, train_los_list,  label='train_los')
@@ -50,7 +50,7 @@ def load_smile():
     print(max(train_los_list))
     print(max(train_acc_list))
     print(max(test_los_list))
-    print(max(test_acc_list))
+    print(max(test_acc_list), test_acc_list.index(max(test_acc_list)))
 
     plt.subplot(2, 2, 1)
     plt.plot(x, train_los_list, label='train_los')
