@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-class CNNY(nn.Module):
+class CNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     test_dataset = EyesDataset(paths_to_images[train_size:], test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-    cnn = CNNY()
+    cnn = CNN()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     error = nn.CrossEntropyLoss()
@@ -249,12 +249,8 @@ if __name__ == "__main__":
             torch.save(cnn, "D:/Python/Models/eye/eye_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("eye_train_los", train_los_list)
-    save_list("eye_train_acc", train_acc_list)
-    save_list("eye_test_los", test_los_list)
-    save_list("eye_test_acc", test_acc_list)
+    save_list("eye/eye_train_los.data", train_los_list)
+    save_list("eye/eye_train_acc.data", train_acc_list)
+    save_list("eye/eye_test_los.data", test_los_list)
+    save_list("eye/eye_test_acc.data", test_acc_list)
 
-    os.replace("eye_train_los.data", "eye/eye_train_los.data")
-    os.replace("eye_train_acc.data", "eye/eye_train_acc.data")
-    os.replace("eye_test_los.data", "eye/eye_test_los.data")
-    os.replace("eye_test_acc.data", "eye/eye_test_acc.data")

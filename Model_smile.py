@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-class CNNS(nn.Module):
+class CNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     test_dataset = EyesDataset(paths_to_images[train_size:], test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-    cnn = CNNS()
+    cnn = CNN()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     error = nn.CrossEntropyLoss()
@@ -248,12 +248,7 @@ if __name__ == "__main__":
             torch.save(cnn, "D:/Python/Models/smile/smile_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("smile_train_los", train_los_list)
-    save_list("smile_train_acc", train_acc_list)
-    save_list("smile_test_los", test_los_list)
-    save_list("smile_test_acc", test_acc_list)
-
-    os.replace("smile_train_los.data", "smile/smile_train_los.data")
-    os.replace("smile_train_acc.data", "smile/smile_train_acc.data")
-    os.replace("smile_test_los.data", "smile/smile_test_los.data")
-    os.replace("smile_test_acc.data", "smile/smile_test_acc.data")
+    save_list("smile/smile_train_los.data", train_los_list)
+    save_list("smile/smile_train_acc.data", train_acc_list)
+    save_list("smile/smile_test_los.data", test_los_list)
+    save_list("smile/smile_test_acc.data", test_acc_list)
