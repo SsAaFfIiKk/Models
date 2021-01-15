@@ -55,7 +55,7 @@ class CNN(nn.Module):
 
         self.fc1 = nn.Linear(in_features=1024, out_features=256)
         self.fc2 = nn.Linear(in_features=256, out_features=64)
-        self.fc3 = nn.Linear(in_features=64, out_features=2)
+        self.fc3 = nn.Linear(in_features=64, out_features=5)
 
     def forward(self, x):
         h = self.conv1(x)
@@ -96,8 +96,12 @@ class CNN(nn.Module):
         return h
 
 
-class SmileDataset(torch.utils.data.Dataset):
-    get_label = {'poker': 0, 'smile': 1}
+class EmotDataset(torch.utils.data.Dataset):
+    get_label = {"angry": 0,
+                 "happy": 1,
+                 "neutral": 2,
+                 "sad": 3,
+                 "fear": 4}
 
     def __init__(self, paths_to_images, transforms):
         self.paths_to_images = paths_to_images
@@ -151,7 +155,7 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-path = "D:/Python/Models/smile"
+path = "D:/Python/Models/emot"
 remove(path, ".pth", ".data")
 
 if __name__ == "__main__":
@@ -171,7 +175,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
 
-    path_to_dataset = "D:/Datasets/Smilesv2"
+    path_to_dataset = "D:/Datasets/Emot"
     paths_to_images = [os.path.join(path_to_dataset, name)
                        for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 
@@ -181,10 +185,10 @@ if __name__ == "__main__":
     train_size = int(0.8 * len(paths_to_images))
     batch_size = 256
 
-    train_dataset = SmileDataset(paths_to_images[:train_size], train_transform)
+    train_dataset = EmotDataset(paths_to_images[:train_size], train_transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-    test_dataset = SmileDataset(paths_to_images[train_size:], test_transform)
+    test_dataset = EmotDataset(paths_to_images[train_size:], test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     cnn = CNN()
@@ -246,10 +250,10 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-            torch.save(cnn, "D:/Python/Models/smile/smile_current_" +
+            torch.save(cnn, "D:/Python/Models/emot/emot_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("smile/smile_train_los", train_los_list)
-    save_list("smile/smile_train_acc", train_acc_list)
-    save_list("smile/smile_test_los", test_los_list)
-    save_list("smile/smile_test_acc", test_acc_list)
+    save_list("emot/emot_train_los", train_los_list)
+    save_list("emot/emot_train_acc", train_acc_list)
+    save_list("emot/emot_test_los", test_los_list)
+    save_list("emot/emot_test_acc", test_acc_list)

@@ -136,8 +136,9 @@ class MotionBlur(object):
         self.angle = random.randint(-90, 90)
         self.k = np.zeros((self.size, self.size), dtype=np.float32)
         self.k[(self.size - 1) // 2, :] = np.ones(self.size, dtype=np.float32)
-        self.k = cv2.warpAffine(self.k, cv2.getRotationMatrix2D((self.size / 2 -0.5, self.size / 2 -0.5),
-                                                      self.angle, 1.0), (self.size, self.size))
+        self.k = cv2.warpAffine(self.k, cv2.getRotationMatrix2D((self.size / 2 - 0.5,
+                                                                 self.size / 2 - 0.5),
+                                                                self.angle, 1.0), (self.size, self.size))
         self.k = self.k * (1.0 / np.sum(self.k))
 
         img = np.array(image)
@@ -220,7 +221,6 @@ if __name__ == "__main__":
         print('Train acccuracy = {}'.format(train_correct / len(train_loader.dataset)))
         print()
 
-
         cnn.eval()
         test_loss = 0
         test_correct = 0
@@ -249,8 +249,7 @@ if __name__ == "__main__":
             torch.save(cnn, "D:/Python/Models/eye/eye_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("eye/eye_train_los.data", train_los_list)
-    save_list("eye/eye_train_acc.data", train_acc_list)
-    save_list("eye/eye_test_los.data", test_los_list)
-    save_list("eye/eye_test_acc.data", test_acc_list)
-
+    save_list("eye/eye_train_los", train_los_list)
+    save_list("eye/eye_train_acc", train_acc_list)
+    save_list("eye/eye_test_los", test_los_list)
+    save_list("eye/eye_test_acc", test_acc_list)
