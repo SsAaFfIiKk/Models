@@ -190,6 +190,7 @@ if __name__ == "__main__":
     cnn = CNN()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
+    cnn.cuda()
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.01)
 

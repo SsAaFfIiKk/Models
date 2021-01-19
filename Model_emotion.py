@@ -155,7 +155,7 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-path = "D:/Python/Models/emot"
+path = "F:/Python/Models/emot"
 remove(path, ".pth", ".data")
 
 if __name__ == "__main__":
@@ -169,13 +169,14 @@ if __name__ == "__main__":
         transforms.RandomApply([MotionBlur(),
                                 transforms.GaussianBlur((5, 5), sigma=(0.1, 2.0))],
                                p=0.3),
+        transforms.RandomPerspective(distortion_scale=0.5, p=0.5, interpolation=2, fill=0),
         transforms.RandomCrop(64, padding=6),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),
         transforms.ToTensor(),
         transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
 
-    path_to_dataset = "D:/Datasets/Emot"
+    path_to_dataset = "F:/Python/Emot"
     paths_to_images = [os.path.join(path_to_dataset, name)
                        for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 
@@ -194,10 +195,11 @@ if __name__ == "__main__":
     cnn = CNN()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
+    cnn.cuda()
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
 
-    epoch_num = 60
+    epoch_num = 250
 
     for epoch_idx in range(epoch_num):
         print('Epoch #{}'.format(epoch_idx))
@@ -250,7 +252,7 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-            torch.save(cnn, "D:/Python/Models/emot/emot_current_" +
+            torch.save(cnn, "F:/Python/Models/emot/emot_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
     save_list("emot/emot_train_los", train_los_list)
