@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
+# Класс модели, отличаеться только кол-во выходов
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -97,6 +98,7 @@ class CNN(nn.Module):
 
 
 class EmotDataset(torch.utils.data.Dataset):
+    # Порядок такой же как и у Артёма
     get_label = {"angry": 0,
                  "happy": 1,
                  "neutral": 2,
@@ -122,6 +124,7 @@ class EmotDataset(torch.utils.data.Dataset):
         return img_tensor, label_idx
 
 
+# Кастомный моушен блюр
 class MotionBlur(object):
     def __call__(self, image):
         self.size = random.randint(1, 50)
@@ -138,11 +141,13 @@ class MotionBlur(object):
         return Image.fromarray(img.astype(np.uint8))
 
 
+# Фугкция для сохранения данных по которым строятся графики
 def save_list(name, list):
     with open(name + ".data", "wb") as f:
         pickle.dump(list, f)
 
 
+# Функция для очистки старых данных
 def remove(path, ext1, ext2):
     dir = os.listdir(path)
     for i in dir:
@@ -166,9 +171,11 @@ if __name__ == "__main__":
 
     train_transform = transforms.Compose([
         transforms.Resize(64),
+        # Случайное применение гаусофского или моушен блюра
         transforms.RandomApply([MotionBlur(),
                                 transforms.GaussianBlur((5, 5), sigma=(0.1, 2.0))],
                                p=0.3),
+        # Изменение перспективы, параметры взяты из документации
         transforms.RandomPerspective(distortion_scale=0.5, p=0.5, interpolation=2, fill=0),
         transforms.RandomCrop(64, padding=6),
         transforms.RandomHorizontalFlip(),
@@ -193,9 +200,11 @@ if __name__ == "__main__":
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     cnn = CNN()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # Определение исполнительного устройства
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
-    cnn.cuda()
+    # Отправка модели на устройство
+    cnn.to(device)
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
 
