@@ -160,8 +160,8 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-path = "F:/Python/Models/emot"
-remove(path, ".pth", ".data")
+weights_folder = "emot"
+remove(weights_folder, ".pth", ".data")
 
 if __name__ == "__main__":
     test_transform = transforms.Compose([
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
     cnn = CNN()
     # Определение исполнительного устройства
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     # Отправка модели на устройство
     cnn.to(device)
@@ -261,10 +261,10 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-            torch.save(cnn, "F:/Python/Models/emot/emot_current_" +
+            torch.save(cnn, weights_folder + "/emot_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("emot/emot_train_los", train_los_list)
-    save_list("emot/emot_train_acc", train_acc_list)
-    save_list("emot/emot_test_los", test_los_list)
-    save_list("emot/emot_test_acc", test_acc_list)
+    save_list(weights_folder + "/emot_train_los", train_los_list)
+    save_list(weights_folder + "/emot_train_acc", train_acc_list)
+    save_list(weights_folder + "/emot_test_los", test_los_list)
+    save_list(weights_folder + "/emot_test_acc", test_acc_list)
