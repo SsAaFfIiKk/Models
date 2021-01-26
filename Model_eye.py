@@ -1,13 +1,8 @@
-import os
-import cv2
 import torch
-import pickle
-import random
-import numpy as np
 from torch import nn
-from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+from Tools import *
 
 
 class CNN(nn.Module):
@@ -118,36 +113,11 @@ class EyesDataset(torch.utils.data.Dataset):
         return img_tensor, label_idx
 
 
-def save_list(name, list):
-    with open(name + ".data", "wb") as f:
-        pickle.dump(list, f)
-
-
-def remove(path, ext1, ext2):
-    dir = os.listdir(path)
-    for i in dir:
-        if i.endswith(ext1) or i.endswith(ext2):
-            os.remove(os.path.join(path, i))
-
-
-class MotionBlur(object):
-    def __call__(self, image):
-        self.size = random.randint(1, 50)
-        self.angle = random.randint(-90, 90)
-        self.k = np.zeros((self.size, self.size), dtype=np.float32)
-        self.k[(self.size - 1) // 2, :] = np.ones(self.size, dtype=np.float32)
-        self.k = cv2.warpAffine(self.k, cv2.getRotationMatrix2D((self.size / 2 - 0.5,
-                                                                 self.size / 2 - 0.5),
-                                                                self.angle, 1.0), (self.size, self.size))
-        self.k = self.k * (1.0 / np.sum(self.k))
-
-        img = np.array(image)
-        img = cv2.filter2D(img, -1, self.k)
-        return Image.fromarray(img.astype(np.uint8))
-
-
-path = "D:/Python/Models/eye"
-remove(path, ".pth", ".data")
+weights_folder = "eye"
+if os.path.exists(weights_folder):
+    remove(weights_folder, ".pth", ".data")
+else:
+    os.mkdir(weights_folder)
 
 train_los_list = []
 test_los_list = []
@@ -247,10 +217,10 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-            torch.save(cnn, "D:/Python/Models/eye/eye_current_" +
+            torch.save(cnn, weights_folder + "/" + weights_folder + "_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
-    save_list("eye/eye_train_los", train_los_list)
-    save_list("eye/eye_train_acc", train_acc_list)
-    save_list("eye/eye_test_los", test_los_list)
-    save_list("eye/eye_test_acc", test_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_train_los", train_los_list)
+    save_list(weights_folder + "/" + weights_folder + "_train_acc", train_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_los", test_los_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_acc", test_acc_list)
