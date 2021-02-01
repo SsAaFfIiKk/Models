@@ -24,8 +24,6 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])])
 
-get_label_eye = {0: "closed", 1: "open"}
-get_label_smile = {0: "poker", 1: "smile"}
 get_label_emot = {0: "angry",
                   1: "happy",
                   2: "neutral",
@@ -66,18 +64,7 @@ chunk_count = 0
 t0 = time.time()
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# log = {
-#     'segment': segment_name,
-#     'frames': [
-#         {
-#             'head_pos': head_pos,  # Координаты башки
-#             'emo_class': emo_class,  # Предсказанная на этом кадре эмоция, переведенная в класс
-#             'blink': blink,  # Моргание или нет, можно использовать 0 или 1, или булевы значения
-#             'smile': smile,  # Улыбка или нет
-#         }
-#     ]
-# }
-
+log = {}
 for i in j_key:
     face_detect = False
 
@@ -89,16 +76,13 @@ for i in j_key:
         print("Skip " + str(i))
         pass
 
+        p
     else:
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
 
-        centrs = []
-        eye_predict = []
-        smile_predict = []
-        emot_predict = []
-
+        predicts = []
         print("Current chunk: ", chunk_count)
-
+        log["segment_" + str(chunk_count)] = chunk_count
         for frame_idx in range(frame_start, frame_end):
 
             ret, frame = cap.read()
@@ -106,23 +90,31 @@ for i in j_key:
 
             cX = int((coords[0] + coords[2]) / 2.0)
             cY = int((coords[1] + coords[3]) / 2.0)
-            centrs.append((cX, cY))
 
             face = frame[coords[0]:coords[2], coords[1]:coords[3]]
             face_r = cv2.resize(face, (64, 64))
 
             face_t = transform(face_r)
             face_u = torch.unsqueeze(face_t, 0)
+            face_u = face_u.to(device)
 
             with torch.no_grad():
                 result_eye = model_eye(face_u)
                 result_smile = model_smile(face_u)
                 result_emot = model_emot(face_u)
 
-                eye_predict.append(result_eye)
-                smile_predict.append(result_smile)
-                emot_predict.append(result_emot)
+                label_emot = result_emot.argmax(dim=1)
+                label_eye = result_eye.argmax(dim=1)
+                label_smile = result_smile.argmax(dim=1)
 
+                anser_emot = get_label_emot[label_emot.sum().item()]
+
+                predicts.append({'head_pos': (cX, cY),
+                                  'emo_class': anser_emot,
+                                  'blink': label_eye.sum().item(),
+                                  'smile': label_smile.sum().item()
+                                  })
+        log["frames"] = predicts
         chunk_count += 1
 
 t1 = time.time()
