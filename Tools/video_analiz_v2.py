@@ -8,17 +8,18 @@ from Models import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
+
 model_eye = torch.load("F:/Python/Models/pth/eyeB_91.8.pth", map_location=torch.device(device))
 model_smile = torch.load("F:/Python/Models/pth/smileB_90.8.pth", map_location=torch.device(device))
 model_emot = torch.load("F:/Python/Models/pth/emotB_57.9.pth", map_location=torch.device(device))
 
-prototxt_path = "F:/Python/Data/model_data/deploy.prototxt"
-caffemodel_path = "F:/Python/Data/model_data/weights.caffemodel"
-model = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
-
 model_eye.eval()
 model_smile.eval()
 model_emot.eval()
+
+prototxt_path = "F:/Python/Data/model_data/deploy.prototxt"
+caffemodel_path = "F:/Python/Data/model_data/weights.caffemodel"
+model = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
 
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -76,7 +77,6 @@ for i in j_key:
         print("Skip " + str(i))
         pass
 
-        p
     else:
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
 
