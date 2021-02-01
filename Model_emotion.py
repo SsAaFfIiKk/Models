@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 from torchvision import transforms
-from Tools import *
+from tools import *
 
 
 # Класс модели, отличаеться только кол-во выходов
@@ -124,7 +124,7 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-weights_folder = "smile"
+weights_folder = "emot"
 if os.path.exists(weights_folder):
     remove(weights_folder, ".pth", ".data")
 else:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
 
-    path_to_dataset = "F:/Python/Emot"
+    path_to_dataset = "F:/Python/Data/Emot"
     paths_to_images = [os.path.join(path_to_dataset, name)
                        for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 

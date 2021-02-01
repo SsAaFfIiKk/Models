@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 
 #в этом файле храниться описание модели
-prototxt_path = "D:/Python/Create_Face_Data/model_data/deploy.prototxt"
+prototxt_path = "F:/Python/Data/model_data/deploy.prototxt"
 # в этом веса
-caffemodel_path = "D:/Python/Create_Face_Data/model_data/weights.caffemodel"
+caffemodel_path = "F:/Python/Data/model_data/weights.caffemodel"
 model = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
 cap = cv2.VideoCapture(0)
 

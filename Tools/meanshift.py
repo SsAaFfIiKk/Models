@@ -2,37 +2,8 @@ import cv2
 import numpy as np
 
 
-# def on_mouse(event, x, y, flags, params):
-#
-#     global boxes
-#     global selection_in_progress
-#
-#     current_mouse_position[0] = x
-#     current_mouse_position[1] = y
-#
-#     if event == cv2.EVENT_LBUTTONDOWN:
-#         boxes = []
-#         sbox = [x, y]
-#         selection_in_progress = True
-#         boxes.append(sbox)
-#
-#     elif event == cv2.EVENT_LBUTTONUP:
-#         ebox = [x, y]
-#         selection_in_progress = False
-#         boxes.append(ebox)
-
-
 cap = cv2.VideoCapture(0)
 ret, frame = cap.read()
-
-# boxes = []
-# current_mouse_position = np.ones(2, dtype=np.int32)
-# selection_in_progress = False
-#
-# window_name = "Tracking"
-# cv2.imshow(window_name, frame)
-# cv2.setMouseCallback(window_name, on_mouse, 0)
-# cv2.waitKey(0)
 
 r, h, c, w = 250,90,400,125
 track_window = (c, r, w, h)

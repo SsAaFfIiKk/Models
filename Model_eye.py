@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 from torchvision import transforms
-from Tools import *
+from tools import *
 
 
 class CNN(nn.Module):
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])])
 
-    path_to_dataset = "D:/Datasets/Faces"
+    path_to_dataset = "F:/Python/Data/Faces"
     paths_to_images = [os.path.join(path_to_dataset, name)
                        for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 

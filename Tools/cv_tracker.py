@@ -26,7 +26,7 @@ if __name__ == '__main__':
         if tracker_type == 'MOSSE':
             tracker = cv2.TrackerMOSSE_create()
 
-    video = cv2.VideoCapture("F:/Python/Data/Demo/video.mp4")
+    video = cv2.VideoCapture("F:/Python/Data/demo/video.mp4")
 
     if not video.isOpened():
         print("Could not open video")
@@ -67,5 +67,5 @@ if __name__ == '__main__':
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
-video.release()
+    video.release()
 cv2.destroyAllWindows()

@@ -284,7 +284,7 @@ get_label_emot = {0: "angry",
                   3: "sad",
                   4: "fear"}
 
-cap = cv2.VideoCapture("F:/Python/emotion.mp4")
+cap = cv2.VideoCapture("F:/Python/Data/emotion.mp4")
 detector = dlib.get_frontal_face_detector()
 
 t0 = time.time()
