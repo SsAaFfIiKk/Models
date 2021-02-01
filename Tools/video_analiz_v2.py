@@ -1,17 +1,20 @@
 import cv2
-import dlib
 import json
 import time
 import torch
+import numpy as np
 from torchvision import transforms
 from Models import *
-
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 model_eye = torch.load("F:/Python/Models/pth/eyeB_91.8.pth", map_location=torch.device(device))
 model_smile = torch.load("F:/Python/Models/pth/smileB_90.8.pth", map_location=torch.device(device))
 model_emot = torch.load("F:/Python/Models/pth/emotB_57.9.pth", map_location=torch.device(device))
+
+prototxt_path = "F:/Python/Data/model_data/deploy.prototxt"
+caffemodel_path = "F:/Python/Data/model_data/weights.caffemodel"
+model = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
 
 model_eye.eval()
 model_smile.eval()
@@ -29,7 +32,7 @@ get_label_emot = {0: "angry",
                   3: "sad",
                   4: "fear"}
 
-with open("F:/Python/Data/Demo/timestemps_cor.json", "r") as read_file:
+with open("F:/Python/Data/demo/timestemps_cor.json", "r") as read_file:
     timesstems = json.load(read_file)
 
 
@@ -40,18 +43,41 @@ def get_key(dict):
     return keys
 
 
+def detect(frame):
+    (h, w) = frame.shape[:2]
+    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+    model.setInput(blob)
+    detections = model.forward()
+
+    for i in range(0, detections.shape[2]):
+        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+        coords = box.astype("int")
+
+        return coords
+
+
 j_key = get_key(timesstems)
 param_key = get_key(timesstems["0"])
 
 cap = cv2.VideoCapture("F:/Python/Data/Demo/video.mp4")
-detector = dlib.get_frontal_face_detector()
 fps = cap.get(cv2.CAP_PROP_FPS)
-
-OUT = {}
 
 chunk_count = 0
 t0 = time.time()
 font = cv2.FONT_HERSHEY_SIMPLEX
+
+# log = {
+#     'segment': segment_name,
+#     'frames': [
+#         {
+#             'head_pos': head_pos,  # Координаты башки
+#             'emo_class': emo_class,  # Предсказанная на этом кадре эмоция, переведенная в класс
+#             'blink': blink,  # Моргание или нет, можно использовать 0 или 1, или булевы значения
+#             'smile': smile,  # Улыбка или нет
+#         }
+#     ]
+# }
+
 for i in j_key:
     face_detect = False
 
@@ -66,51 +92,23 @@ for i in j_key:
     else:
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
 
-        trackers = []
         centrs = []
         eye_predict = []
         smile_predict = []
         emot_predict = []
 
-        print(chunk_count)
+        print("Current chunk: ", chunk_count)
+
         for frame_idx in range(frame_start, frame_end):
 
             ret, frame = cap.read()
-            if not ret:
-                break
+            coords = detect(frame)
 
-            if face_detect == False:
-                bboxes = detector(frame)
-
-                for i in bboxes:
-                    x1 = i.left()
-                    y1 = i.top()
-                    x2 = i.right()
-                    y2 = i.bottom()
-                    (startX, startY, endX, endY) = (x1, y1, x2, y2)
-                    tracker = dlib.correlation_tracker()
-                    rect = dlib.rectangle(x1, y1, x2, y2)
-                    tracker.start_track(frame, rect)
-                    trackers.append(tracker)
-
-            else:
-                for tracker in trackers:
-                    tracker.update(frame)
-                    pos = tracker.get_position()
-
-                    startX = int(pos.left())
-                    startY = int(pos.top())
-                    endX = int(pos.right())
-                    endY = int(pos.bottom())
-                    cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
-
-            face_detect = True
-
-            cX = int((startX + endX) / 2.0)
-            cY = int((startY + endY) / 2.0)
+            cX = int((coords[0] + coords[2]) / 2.0)
+            cY = int((coords[1] + coords[3]) / 2.0)
             centrs.append((cX, cY))
 
-            face = frame[startY:endY, startX:endX]
+            face = frame[coords[0]:coords[2], coords[1]:coords[3]]
             face_r = cv2.resize(face, (64, 64))
 
             face_t = transform(face_r)
@@ -124,9 +122,6 @@ for i in j_key:
                 eye_predict.append(result_eye)
                 smile_predict.append(result_smile)
                 emot_predict.append(result_emot)
-
-            cv2.imshow("frame", frame)
-            cv2.waitKey(1)
 
         chunk_count += 1
 
