@@ -2,6 +2,7 @@ import cv2
 import json
 import time
 import torch
+import pickle
 import numpy as np
 from torchvision import transforms
 from Models import *
@@ -63,9 +64,8 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 
 chunk_count = 0
 t0 = time.time()
-font = cv2.FONT_HERSHEY_SIMPLEX
+font = cv2.FONT_HERSHEY_TRIPLEX
 
-log = {}
 for i in j_key:
     face_detect = False
 
@@ -79,7 +79,7 @@ for i in j_key:
 
     else:
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
-
+        log = {}
         predicts = []
         print("Current chunk: ", chunk_count)
         log["segment_" + str(chunk_count)] = chunk_count
@@ -90,6 +90,8 @@ for i in j_key:
 
             cX = int((coords[0] + coords[2]) / 2.0)
             cY = int((coords[1] + coords[3]) / 2.0)
+            cv2.rectangle(frame, (coords[0], coords[1]), (coords[2], coords[3]), (255, 255, 255), 2)
+            cv2.circle(frame, (cX, cY), 1, (255, 255, 255), 2)
 
             face = frame[coords[0]:coords[2], coords[1]:coords[3]]
             face_r = cv2.resize(face, (64, 64))
@@ -103,9 +105,9 @@ for i in j_key:
                 result_smile = model_smile(face_u)
                 result_emot = model_emot(face_u)
 
-                label_emot = result_emot.argmax(dim=1)
                 label_eye = result_eye.argmax(dim=1)
                 label_smile = result_smile.argmax(dim=1)
+                label_emot = result_emot.argmax(dim=1)
 
                 anser_emot = get_label_emot[label_emot.sum().item()]
 
@@ -114,7 +116,15 @@ for i in j_key:
                                   'blink': label_eye.sum().item(),
                                   'smile': label_smile.sum().item()
                                   })
+            cv2.putText(frame, "eye: " + str(label_eye.sum().item()), (15, 240), font, 1, (0, 255, 0), 1)
+            cv2.putText(frame, "smile: " + str(label_smile.sum().item()), (15, 270), font, 1, (0, 255, 0), 1)
+            cv2.putText(frame, "emotion:" + anser_emot , (15, 300), font, 1, (0, 255, 0), 1)
+            cv2.imshow("frame", frame)
+            cv2.waitKey(1)
+
         log["frames"] = predicts
+        with open("chunk" + str(chunk_count) + ".data", "wb") as f:
+            pickle.dump(log, f)
         chunk_count += 1
 
 t1 = time.time()
