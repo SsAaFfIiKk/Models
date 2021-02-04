@@ -188,3 +188,20 @@ import numpy as np
 #
 # if __name__ == '__main__':
 #     main()
+
+# def crop_board(coor, h, w):
+#     x = coor[0::2]
+#     y = coor[1::2]
+#     for  id, i in enumerate(x):
+#         if i > w:
+#             x[id] = w
+#         elif i < 0:
+#             x[id] = 0
+#
+#     for  id, i in enumerate(y):
+#         if i > h:
+#             y[id] = h
+#         elif i < 0:
+#             y[id] = 0
+#
+#     return x, y

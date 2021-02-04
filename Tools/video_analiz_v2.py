@@ -36,39 +36,38 @@ with open("F:/Python/Data/demo/timestemps_cor.json", "r") as read_file:
     timesstems = json.load(read_file)
 
 
-def get_key(dict):
+def get_key(dct):
     keys = []
-    for key in dict.keys():
+    for key in dct.keys():
         keys.append(key)
     return keys
 
 
-def detect(frame):
-    (h, w) = frame.shape[:2]
-    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+def detect(img):
+    (h, w) = img.shape[:2]
+    blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
     model.setInput(blob)
     detections = model.forward()
 
-    for i in range(0, detections.shape[2]):
-        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-        coords = box.astype("int")
+    for found in range(0, detections.shape[2]):
+        box = detections[0, 0, found, 3:7] * np.array([w, h, w, h])
+        cor = box.astype("int")
 
-        return coords
+        return cor
 
 
 j_key = get_key(timesstems)
 param_key = get_key(timesstems["0"])
 
 cap = cv2.VideoCapture("F:/Python/Data/Demo/video.mp4")
+# cap = cv2.VideoCapture(0)
 fps = cap.get(cv2.CAP_PROP_FPS)
+font = cv2.FONT_HERSHEY_TRIPLEX
 
 chunk_count = 0
 t0 = time.time()
-font = cv2.FONT_HERSHEY_TRIPLEX
-
 for i in j_key:
     face_detect = False
-
     frame_start = int(timesstems[str(i)][param_key[0]] / 100 * fps)
     frame_end = int(timesstems[str(i)][param_key[1]] / 100 * fps)
 
@@ -78,11 +77,12 @@ for i in j_key:
         pass
 
     else:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
         log = {}
         predicts = []
-        print("Current chunk: ", chunk_count)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
         log["segment_" + str(chunk_count)] = chunk_count
+        print("Current chunk: ", chunk_count)
+
         for frame_idx in range(frame_start, frame_end):
 
             ret, frame = cap.read()
@@ -90,10 +90,8 @@ for i in j_key:
 
             cX = int((coords[0] + coords[2]) / 2.0)
             cY = int((coords[1] + coords[3]) / 2.0)
-            cv2.rectangle(frame, (coords[0], coords[1]), (coords[2], coords[3]), (255, 255, 255), 2)
-            cv2.circle(frame, (cX, cY), 1, (255, 255, 255), 2)
 
-            face = frame[coords[0]:coords[2], coords[1]:coords[3]]
+            face = frame[coords[1]:coords[3], coords[0]:coords[2]]
             face_r = cv2.resize(face, (64, 64))
 
             face_t = transform(face_r)
@@ -112,19 +110,22 @@ for i in j_key:
                 anser_emot = get_label_emot[label_emot.sum().item()]
 
                 predicts.append({'head_pos': (cX, cY),
-                                  'emo_class': anser_emot,
-                                  'blink': label_eye.sum().item(),
-                                  'smile': label_smile.sum().item()
-                                  })
+                                 'emo_class': anser_emot,
+                                 'blink': label_eye.sum().item(),
+                                 'smile': label_smile.sum().item()
+                                 })
+
+            cv2.rectangle(frame, (coords[0], coords[1]), (coords[2], coords[3]), (255, 255, 255), 2)
+            cv2.circle(frame, (cX, cY), 1, (255, 255, 255), 2)
             cv2.putText(frame, "eye: " + str(label_eye.sum().item()), (15, 240), font, 1, (0, 255, 0), 1)
             cv2.putText(frame, "smile: " + str(label_smile.sum().item()), (15, 270), font, 1, (0, 255, 0), 1)
             cv2.putText(frame, "emotion:" + anser_emot , (15, 300), font, 1, (0, 255, 0), 1)
             cv2.imshow("frame", frame)
             cv2.waitKey(1)
 
-        log["frames"] = predicts
-        with open("chunk" + str(chunk_count) + ".data", "wb") as f:
-            pickle.dump(log, f)
+        # log["frames"] = predicts
+        # with open("chunk" + str(chunk_count) + ".data", "wb") as f:
+        #     pickle.dump(log, f)
         chunk_count += 1
 
 t1 = time.time()
