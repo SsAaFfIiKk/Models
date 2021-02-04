@@ -8,11 +8,12 @@ from tools import *
 
 class EmotDataset(torch.utils.data.Dataset):
     # Порядок такой же как и у Артёма
-    get_label = {"angry": 0,
-                 "happy": 1,
-                 "neutral": 2,
-                 "sad": 3,
-                 "fear": 4}
+    # get_label = {"angry": 0,
+    #              "happy": 1,
+    #              "neutral": 2,
+    #              "sad": 3,
+    #              "fear": 4}
+    get_label = {"Anger": 0, "Happy": 1, "Neutral": 2, "Sad": 3, "Fear": 4, "Surprise":5, "Disgust":6, "Contempt": 7}
 
     def __init__(self, paths_to_images, transforms):
         self.paths_to_images = paths_to_images
@@ -38,16 +39,16 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-num_classes = 5
+num_classes = 8
 batch_size = 256
 epoch_num = 200
 feature_extract = True
 
-model = models.resnet50()
+model = models.resnet18()
 num_ftrs = model.fc.in_features
 model.fc = nn.Linear(num_ftrs, num_classes)
 
-weights_folder = "res50"
+weights_folder = "res18A"
 if os.path.exists(weights_folder):
     remove(weights_folder, ".pth", ".data")
 else:
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
 
-    path_to_dataset = "F:/Python/Data/Emot"
+    path_to_dataset = "F:/Python/Data/Rebuild_affect"
     paths_to_images = [os.path.join(path_to_dataset, name)
                        for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
 
@@ -81,10 +82,10 @@ if __name__ == "__main__":
     train_size = int(0.8 * len(paths_to_images))
 
     train_dataset = EmotDataset(paths_to_images[:train_size], train_transform)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     test_dataset = EmotDataset(paths_to_images[train_size:], test_transform)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
