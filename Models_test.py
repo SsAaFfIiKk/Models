@@ -263,21 +263,27 @@ class CNN(nn.Module):
         h = self.fc3(h)
         return h
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
-model_eye = torch.load("pth/eyeB_91.8.pth").cpu()
-model_smile = torch.load("pth/smileB_90.8.pth").cpu()
-model_emot = torch.load("pth/emotB_57.9.pth").cpu()
+# model_eye = torch.load("pth/eyeB_91.8.pth", map_location=torch.device(device))
+# model_smile = torch.load("pth/smileB_90.8.pth", map_location=torch.device(device))
+# model_emot = torch.load("pth/emotB_57.9.pth", map_location=torch.device(device))
+res18 = torch.load("pth/res18_emot_67.4.pth", map_location=torch.device(device))
+res50 = torch.load("pth/res50_emot_67.5.pth", map_location=torch.device(device))
 
-model_eye.eval()
-model_smile.eval()
-model_emot.eval()
+# model_eye.eval()
+# model_smile.eval()
+# model_emot.eval()
+res18.eval()
+res50.eval()
 
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])])
 
-get_label_eye = {0: "closed", 1: "open"}
-get_label_smile = {0: "poker", 1: "smile"}
+# get_label_eye = {0: "closed", 1: "open"}
+# get_label_smile = {0: "poker", 1: "smile"}
 get_label_emot = {0: "angry",
                   1: "happy",
                   2: "neutral",
@@ -285,11 +291,12 @@ get_label_emot = {0: "angry",
                   4: "fear"}
 
 cap = cv2.VideoCapture("F:/Python/Data/emotion.mp4")
+# cap = cv2.VideoCapture(0)
 detector = dlib.get_frontal_face_detector()
 
 t0 = time.time()
 font = cv2.FONT_HERSHEY_SIMPLEX
-frame_count = 0
+Face_detect = False
 
 trackers = []
 
@@ -298,7 +305,7 @@ while True:
     if not ret:
         break
 
-    if frame_count == 0:
+    if Face_detect == False:
         bboxes = detector(frame)
 
         for i in bboxes:
@@ -323,35 +330,39 @@ while True:
             endY = int(pos.bottom())
             cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 3)
 
-    frame_count += 1
+    Face_detect = True
 
     face = frame[startY:endY, startX:endX]
     face_r = cv2.resize(face, (64, 64))
 
-    face_y = transform(face_r)
-    face_s = transform(face_r)
-    face_e = transform(face_r)
-
-    face_y = torch.unsqueeze(face_y, 0)
-    face_s = torch.unsqueeze(face_s, 0)
-    face_e = torch.unsqueeze(face_e, 0)
+    face_t = transform(face_r)
+    face_u = torch.unsqueeze(face_t, 0)
+    face_u = face_u.to(device)
 
     with torch.no_grad():
-        result_eye = model_eye(face_y)
-        result_smile = model_smile(face_s)
-        result_emot = model_emot(face_e)
+        # result_eye = model_eye(face_u)
+        # result_smile = model_smile(face_u)
+        # result_emot = model_emot(face_u)
+        res18_result = res18(face_u)
+        res50_result = res50(face_u)
 
-        label_eye = result_eye.argmax(dim=1)
-        label_smile = result_smile.argmax(dim=1)
-        label_emot = result_emot.argmax(dim=1)
+        # label_eye = result_eye.argmax(dim=1)
+        # label_smile = result_smile.argmax(dim=1)
+        # label_emot = result_emot.argmax(dim=1)
+        label_res18 = res18_result.argmax(dim=1)
+        label_res50 = res50_result.argmax(dim=1)
 
-        anser_eye = get_label_eye[label_eye.sum().item()]
-        anser_smile = get_label_smile[label_smile.sum().item()]
-        anser_emot = get_label_emot[label_emot.sum().item()]
+        # anser_eye = get_label_eye[label_eye.sum().item()]
+        # anser_smile = get_label_smile[label_smile.sum().item()]
+        # anser_emot = get_label_emot[label_emot.sum().item()]
+        anser18 = get_label_emot[label_res18.sum().item()]
+        anser50 = get_label_emot[label_res50.sum().item()]
 
-        cv2.putText(frame, anser_eye, (25, 20), font, 1, (255, 0, 0), 1)
-        cv2.putText(frame, anser_smile, (25, 40), font, 1, (255, 0, 0), 1)
-        cv2.putText(frame, anser_emot, (25, 60), font, 1, (255, 0, 0), 1)
+        # cv2.putText(frame, anser_eye, (25, 20), font, 1, (255, 0, 0), 1)
+        # cv2.putText(frame, anser_smile, (25, 40), font, 1, (255, 0, 0), 1)
+        # cv2.putText(frame, anser_emot, (25, 60), font, 1, (255, 0, 0), 1)
+        cv2.putText(frame, "res18: " + anser18, (25, 20), font, 1, (255, 0, 0), 1)
+        cv2.putText(frame, "res50: " + anser50, (25, 50), font, 1, (255, 0, 0), 1)
 
     cv2.imshow("frame", frame)
     cv2.waitKey(1)
