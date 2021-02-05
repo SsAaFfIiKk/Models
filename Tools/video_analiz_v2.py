@@ -88,44 +88,52 @@ for i in j_key:
             ret, frame = cap.read()
             coords = detect(frame)
 
+            if coords[0] < 0:
+                coords[0] = 0
+
             cX = int((coords[0] + coords[2]) / 2.0)
             cY = int((coords[1] + coords[3]) / 2.0)
 
             face = frame[coords[1]:coords[3], coords[0]:coords[2]]
-            face_r = cv2.resize(face, (64, 64))
 
-            face_t = transform(face_r)
-            face_u = torch.unsqueeze(face_t, 0)
-            face_u = face_u.to(device)
+            if len(face) != 0:
+                face_r = cv2.resize(face, (64, 64))
 
-            with torch.no_grad():
-                result_eye = model_eye(face_u)
-                result_smile = model_smile(face_u)
-                result_emot = model_emot(face_u)
+                face_t = transform(face_r)
+                face_u = torch.unsqueeze(face_t, 0)
+                face_u = face_u.to(device)
 
-                label_eye = result_eye.argmax(dim=1)
-                label_smile = result_smile.argmax(dim=1)
-                label_emot = result_emot.argmax(dim=1)
+                with torch.no_grad():
+                    result_eye = model_eye(face_u)
+                    result_smile = model_smile(face_u)
+                    result_emot = model_emot(face_u)
 
-                anser_emot = get_label_emot[label_emot.sum().item()]
+                    label_eye = result_eye.argmax(dim=1)
+                    label_smile = result_smile.argmax(dim=1)
+                    label_emot = result_emot.argmax(dim=1)
 
-                predicts.append({'head_pos': (cX, cY),
-                                 'emo_class': anser_emot,
-                                 'blink': label_eye.sum().item(),
-                                 'smile': label_smile.sum().item()
-                                 })
+                    anser_emot = get_label_emot[label_emot.sum().item()]
 
-            cv2.rectangle(frame, (coords[0], coords[1]), (coords[2], coords[3]), (255, 255, 255), 2)
-            cv2.circle(frame, (cX, cY), 1, (255, 255, 255), 2)
-            cv2.putText(frame, "eye: " + str(label_eye.sum().item()), (15, 240), font, 1, (0, 255, 0), 1)
-            cv2.putText(frame, "smile: " + str(label_smile.sum().item()), (15, 270), font, 1, (0, 255, 0), 1)
-            cv2.putText(frame, "emotion:" + anser_emot , (15, 300), font, 1, (0, 255, 0), 1)
-            cv2.imshow("frame", frame)
-            cv2.waitKey(1)
+                    predicts.append({'head_pos': (cX, cY),
+                                     'emo_class': anser_emot,
+                                     'blink': label_eye.sum().item(),
+                                     'smile': label_smile.sum().item()
+                                     })
 
-        # log["frames"] = predicts
-        # with open("chunk" + str(chunk_count) + ".data", "wb") as f:
-        #     pickle.dump(log, f)
+                cv2.rectangle(frame, (coords[0], coords[1]), (coords[2], coords[3]), (255, 255, 255), 2)
+                cv2.circle(frame, (cX, cY), 1, (255, 255, 255), 2)
+                cv2.putText(frame, "eye: " + str(label_eye.sum().item()), (15, 240), font, 1, (0, 255, 0), 1)
+                cv2.putText(frame, "smile: " + str(label_smile.sum().item()), (15, 270), font, 1, (0, 255, 0), 1)
+                cv2.putText(frame, "emotion:" + anser_emot, (15, 300), font, 1, (0, 255, 0), 1)
+                cv2.imshow("frame", frame)
+                cv2.waitKey(1)
+            else:
+                cv2.imshow("frame", frame)
+                cv2.waitKey(1)
+
+        log["frames"] = predicts
+        with open("chunk" + str(chunk_count) + ".data", "wb") as f:
+            pickle.dump(log, f)
         chunk_count += 1
 
 t1 = time.time()
