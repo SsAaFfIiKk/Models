@@ -1,5 +1,6 @@
 import cv2
 import torch
+import numpy as np
 from torchvision import transforms
 
 
@@ -26,13 +27,12 @@ class VideoAnalyze:
     def get_face_borders(self, frame):
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-        model_cv.setInput(blob)
-        detections = model_cv.forward()
+        self.model_cv.setInput(blob)
+        detections = self.model_cv.forward()
 
         for found in range(0, detections.shape[2]):
             box = detections[0, 0, found, 3:7] * np.array([w, h, w, h])
             cor = box.astype("int")
-            cor = cor
 
             return cor
 

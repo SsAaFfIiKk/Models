@@ -1,4 +1,3 @@
-import numpy as np
 from Source.Model_loader import *
 from Source.Video_preparation import *
 from Source.Video_analyze import *
@@ -32,20 +31,6 @@ def analyze_frame(cor):
     return centrs, eye, smile, emot
 
 
-# def get_face_borders(frame):
-#     (h, w) = frame.shape[:2]
-#     blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-#     model_cv.setInput(blob)
-#     detections = model_cv.forward()
-#
-#     for found in range(0, detections.shape[2]):
-#         box = detections[0, 0, found, 3:7] * np.array([w, h, w, h])
-#         cor = box.astype("int")
-#         cor = cor
-#
-#         return cor
-
-
 def analyze_video(cap, chunks_borders):
     chunk_count = 0
     for border in chunks_borders:
@@ -65,7 +50,10 @@ def analyze_video(cap, chunks_borders):
         for frame_ind in range(frame_start, frame_end):
 
             ret, frame = cap.read()
-            cor = get_face_borders(frame)
+            cor = analyzer.get_face_borders(frame)
+            if cor[0] < 0:
+                cor[0] = 0
+
             analyzer.check_face(frame, cor)
 
             if analyzer.face_detect:
@@ -82,6 +70,7 @@ def analyze_video(cap, chunks_borders):
                                  'smile': smile
                                  })
         log["frames"] = predicts
+        print(log)
         chunk_count += 1
 
 
