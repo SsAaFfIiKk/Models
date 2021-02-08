@@ -1,4 +1,6 @@
 from torch import nn
+
+
 # модель эмоций
 class CNN(nn.Module):
     def __init__(self):
