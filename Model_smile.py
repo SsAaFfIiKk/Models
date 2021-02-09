@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 from torch.utils.data import Dataset
-from torchvision import transforms
 from tools import *
 
 
@@ -120,51 +119,37 @@ test_acc_list = []
 
 weights_folder = "smile"
 if os.path.exists(weights_folder):
-    remove(weights_folder, ".pth", ".data")
+    remove(weights_folder, "pth", "data")
 else:
     os.mkdir(weights_folder)
 
+test_transform, train_transform = get_transform((64, 64))
+
+path_to_dataset = "F:/Python/Data/Smilesv2"
+paths_to_images = [os.path.join(path_to_dataset, name)
+                   for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
+
+random.seed(0)
+random.shuffle(paths_to_images)
+
+train_size = int(0.8 * len(paths_to_images))
+batch_size = 256
+epoch_num = 80
+
 if __name__ == "__main__":
-    test_transform = transforms.Compose([
-        transforms.Resize(64),
-        transforms.ToTensor(),
-        transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
-
-    train_transform = transforms.Compose([
-        transforms.Resize(64),
-        transforms.RandomApply([MotionBlur(),
-                                transforms.GaussianBlur((5, 5), sigma=(0.1, 2.0))],
-                               p=0.3),
-        transforms.RandomCrop(64, padding=6),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
-        transforms.ToTensor(),
-        transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
-
-    path_to_dataset = "F:/Python/Data/Smilesv2"
-    paths_to_images = [os.path.join(path_to_dataset, name)
-                       for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
-
-    random.seed(0)
-    random.shuffle(paths_to_images)
-
-    train_size = int(0.8 * len(paths_to_images))
-    batch_size = 256
-
     train_dataset = SmileDataset(paths_to_images[:train_size], train_transform)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     test_dataset = SmileDataset(paths_to_images[train_size:], test_transform)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     cnn = CNN()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
-    cnn.cuda()
+    cnn.to(device)
+
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
-
-    epoch_num = 60
 
     for epoch_idx in range(epoch_num):
         print('Epoch #{}'.format(epoch_idx))
@@ -217,8 +202,9 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-            torch.save(cnn, weights_folder + "/" + weights_folder + "_current_" +
-                       "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
+        print('Save')
+        torch.save(cnn, weights_folder + "/" + weights_folder + "_current_" +
+                   "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
     save_list(weights_folder + "/" + weights_folder + "_train_los", train_los_list)
     save_list(weights_folder + "/" + weights_folder + "_train_acc", train_acc_list)

@@ -124,12 +124,13 @@ train_acc_list = []
 test_acc_list = []
 
 weights_folder = "emot"
-if not os.path.isdir(weights_folder):
-    os.mkdir(weights_folder)
+if os.path.exists(weights_folder):
+    remove(weights_folder, "pth", "data")
 else:
-    remove(weights_folder, [".pth", ".data"])
+    os.mkdir(weights_folder)
 
-test_transform, train_transform = transform(64)
+test_transform, train_transform = get_transform((64, 64))
+
 path_to_dataset = "F:/Python/Data/Emot"
 paths_to_images = [os.path.join(path_to_dataset, name)
                    for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
@@ -139,8 +140,8 @@ random.shuffle(paths_to_images)
 
 train_size = int(0.8 * len(paths_to_images))
 batch_size = 256
-epoch_num = 3
-best_acc = 0
+epoch_num = 200
+
 if __name__ == "__main__":
     train_dataset = EmotDataset(paths_to_images[:train_size], train_transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, num_workers=4, batch_size=batch_size, shuffle=True)
@@ -148,12 +149,11 @@ if __name__ == "__main__":
     test_dataset = EmotDataset(paths_to_images[train_size:], test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, num_workers=4, batch_size=batch_size, shuffle=True)
 
-    # Определение исполнительного устройства
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
-    # Отправка модели на устройство
     cnn = CNN()
     cnn.to(device)
+
     error = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
 
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             print('Test acccuracy = {}'.format(test_correct))
             print('---------------------')
 
-        print('Saving..')
+        print('Save')
         torch.save(cnn, weights_folder + "/" + weights_folder + "_current_" +
                        "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
 
