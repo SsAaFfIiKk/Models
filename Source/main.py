@@ -1,3 +1,4 @@
+import pickle
 from Source.Model_loader import *
 from Source.Video_preparation import *
 from Source.Video_analyze import *
@@ -70,7 +71,8 @@ def analyze_video(cap, chunks_borders):
                                  'smile': smile
                                  })
         log["frames"] = predicts
-        print(log)
+        with open("chunk_" + str(chunk_count) + ".data", "wb") as f:
+            pickle.dump(log, f)
         chunk_count += 1
 
 
