@@ -1,5 +1,6 @@
 import os
 import cv2
+import torch
 import random
 import pickle
 import numpy as np
@@ -35,13 +36,8 @@ def remove(path, *exts):
         if i.split(".")[-1] in exts:
             os.remove(os.path.join(path, i))
 
-# def remove(path, ext1, ext2):
-#     dr = os.listdir(path)
-#     for i in dr:
-#         if i.endswith(ext1) or i.endswith(ext2):
-#             os.remove(os.path.join(path, i))
 
-def transform(r_size):
+def get_transform(r_size):
     test_transform = transforms.Compose([
         transforms.Resize(r_size),
         transforms.ToTensor(),
@@ -62,3 +58,8 @@ def transform(r_size):
         transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
 
     return test_transform, train_transform
+
+def load_model(path_to_model, device):
+    model = torch.load(path_to_model, map_location=torch.device(device))
+    model.eval()
+    return model
