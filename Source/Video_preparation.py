@@ -18,9 +18,9 @@ class VideoPreparation:
                 self.chunks.append((frame_start, border))
                 frame_start = border
             else:
-                self.chunks.append((frame_start + 1, border))
+                self.chunks.append((frame_start, border))
                 frame_start = border
-        self.chunks.append((frame_start + 1, self.frame_number))
+        self.chunks.append((frame_start, self.frame_number))
 
     def get_data(self):
-        return self.cap, self.chunks
+        return self.cap, self.chunks, self.fps

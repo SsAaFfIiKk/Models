@@ -68,4 +68,4 @@ class VideoAnalyze:
         result_emot = self.model_emot(self.face_u)
         label_emot = result_emot.argmax(dim=1)
         anser_emot = self.get_label_emot[label_emot.sum().item()]
-        return anser_emot
+        return anser_emot, result_emot.detach().numpy()
