@@ -1,5 +1,6 @@
 import os
 import pickle
+import json
 # В этом модуля наши функции из комбайна, я просто убрал у них проверку на длинну
 from agregation import *
 # Модуль для загрузки моделей
@@ -29,35 +30,63 @@ chunk_size = 30
 analyzer = VideoAnalyze(model_eye, model_smile, model_emot, model_cv)
 analyzer.prepare_transforms()
 
+folder_param = "F:/Python/Models/Source/param"
+folder_emot = "F:/Python/Models/Source/emot/video"
 
 def analyze_frame(cor):
     centrs = analyzer.get_face_position(cor)
-    eye = analyzer.get_eye_predict()
-    smile = analyzer.get_smile_predict()
-    emot_label, emot = analyzer.get_emot_predict()
-    return centrs, eye, smile, emot_label, emot
+    eye_predict = analyzer.get_eye_predict()
+    smile_predict = analyzer.get_smile_predict()
+    emot_predict = analyzer.get_emot_predict()
+    return centrs, eye_predict, smile_predict, emot_predict
 
 
 def analyze_video(v_num, cap, chunks_borders):
-    chunk_count = 0
+    name_param = str(v_num) + "_video_parameters.json"
+    name_emot = str(v_num) + "_video_emotion_logits.json"
+    segment_video_parameters = {}
+    segment_video_emot_logits = {}
+
+    segment_video_parameters["segment"] = {}
+    segment_video_emot_logits["segment"] = {}
+
+    segment_video_parameters["segment"]["id"] = str(v_num)
+    segment_video_emot_logits["segment"]["id"] = str(v_num)
+
+    chunk_param_list = []
+    chunk_emot_list = []
+
+    chunk_count = 1
+    # log = {}
     # начинаем перебор по чанкам
     for border in chunks_borders:
-        log = {}
+        chunk_pram_dict = {}
+        chunk_emot_dict = {}
+
+        chunk_pram_dict["number"] = chunk_count
+        chunk_emot_dict["number"] = chunk_count
+
         predicts = []
-        log["segment_" + str(chunk_count)] = chunk_count
 
         centrs = []
         eye_predicts = []
         smile_predicts = []
         emot_predicts = []
-        emot_label_predicts = []
 
         frame_start = border[0]
         frame_end = border[1]
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
 
         # Анализируем каждый кадр в чанке
+        # log["segment_" + str(chunk_count)] = chunk_count
+        print("Start analyze {} chunk".format(chunk_count))
+        chunk_len = frame_end - frame_start
+
         for frame_ind in range(frame_start, frame_end):
+            if frame_ind == frame_start:
+                chunk_pram_dict["duration"] = (frame_end - frame_start) / fps
+                chunk_emot_dict["duration"] = (frame_end - frame_start) / fps
+
             ret, frame = cap.read()
             cor = analyzer.get_face_borders(frame)
             # Упрт проверка чтоб трекер не отрыгнуло
@@ -67,31 +96,50 @@ def analyze_video(v_num, cap, chunks_borders):
             analyzer.check_face(frame, cor)
             # Если есть лицо передаем его моделям
             if analyzer.face_detect:
-                centr, eye, smile, emot_label, emot = analyze_frame(cor)
+                centr, eye, smile, emot = analyze_frame(cor)
                 centrs.append(centr)
                 eye_predicts.append(eye)
                 smile_predicts.append(smile)
                 emot_predicts.append(emot)
-                emot_label_predicts.append(emot_label)
+
 
                 predicts.append({'head_pos': centr,
                                  'emo_class': emot,
                                  'blink': eye,
                                  'smile': smile
                                  })
+
         # Запись логов в исходном виде
-        log["frames_for_{}_chunk".format(str(chunk_count))] = predicts
-        with open( "video_" + str(v_num) + "chunk_" + str(chunk_count) + ".data", "wb") as f:
-            pickle.dump(log, f)
+        # log["frames_for_{}_chunk".format(str(chunk_count))] = predicts
+        # with open("video_" + str(v_num) + "_chunk_" + str(chunk_count) + ".data", "wb") as f:
+        #     pickle.dump(log, f)
 
         print("Start aggregation")
         head_move, eye_mean, smile_mean, emot_mean = perform_aggregation(fps,
+                                                                         chunk_len,
                                                                          centrs,
                                                                          eye_predicts,
                                                                          smile_predicts,
                                                                          emot_predicts)
+        chunk_pram_dict["num_head_movenents"] = head_move[0]
+        chunk_pram_dict["num_blinks"] = eye_mean[0]
+        chunk_pram_dict["num_smiles"] = smile_mean[0]
+        chunk_emot_dict["video_emotion_model_logits"] = emot_mean
+
+        chunk_param_list.append(chunk_pram_dict)
+        chunk_emot_list.append(chunk_emot_dict)
 
         chunk_count += 1
+
+    segment_video_parameters["segment"]["chunks"] = chunk_param_list
+    segment_video_emot_logits["segment"]["chunks"] = chunk_emot_list
+
+    with open(os.path.join(folder_param, name_param), "w") as file:
+        json.dump(segment_video_parameters, file, indent=2)
+
+    with open(os.path.join(folder_emot, name_emot), "w") as file:
+        json.dump(segment_video_emot_logits, file, indent=2)
+
 
 # Перебераем все видоса из списка. Каждый делится на чанкии анализируется полностью
 for num, video in enumerate(video_list):

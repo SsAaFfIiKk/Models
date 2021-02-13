@@ -12,11 +12,6 @@ class VideoAnalyze:
         self.model_cv = model_cv
         self.face_detect = False
         self.face = None
-        self.get_label_emot = {0: "angry",
-                               1: "happy",
-                               2: "neutral",
-                               3: "sad",
-                               4: "fear"}
 
     def prepare_transforms(self):
         self.transform = transforms.Compose([
@@ -66,6 +61,4 @@ class VideoAnalyze:
 
     def get_emot_predict(self):
         result_emot = self.model_emot(self.face_u)
-        label_emot = result_emot.argmax(dim=1)
-        anser_emot = self.get_label_emot[label_emot.sum().item()]
-        return anser_emot, result_emot.detach().numpy()
+        return result_emot.detach().numpy()

@@ -1,49 +1,45 @@
 import numpy as np
 
 
-def perform_aggregation(fps, heads, blinks, smiles,  emotions):
+def perform_aggregation(fps, chunk_len, heads, blinks, smiles, emotions):
+    step = chunk_len * fps
+    head_mov_list = []
     head_arr = np.array(heads).astype(np.float64)
-    emot_mean = []
-    head_mov_30s_list = []
-    step = 30 * fps
 
     eye_predict = compute_states_on_30s(blinks, step)
     smile_predict = compute_states_on_30s(smiles, step)
+    emot_mean = []
 
     for idx_30s_chunk in range(0, len(head_arr), step):
         head_mov_num = get_head_movs_num(head_arr[idx_30s_chunk:idx_30s_chunk + step], fps)
-        head_mov_30s_list.append(head_mov_num)
+        head_mov_list.append(head_mov_num)
 
-    for count in emotions:
-        three_s = get_chunks(count, 3 * fps)
-        for pr in three_s:
+    three_s = get_chunks(emotions, 3 * fps)
+    for pr in three_s:
+        if len(pr) >= 2.5 * fps:
             emot_mean.append(np.mean(pr, axis=0).reshape(-1).tolist())
 
-    return head_mov_30s_list, eye_predict, smile_predict, emot_mean
+    return head_mov_list, eye_predict, smile_predict, emot_mean
 
 
 def get_chunks(lst, chunk_size):
-    """
-    разделяем список на 30 секунд,
-    """
-    list_30s = []
-    for idx_30s in range(0, len(lst), chunk_size):
-        list_30s.append(lst[idx_30s:idx_30s+chunk_size])
-    return list_30s
+    list_s = []
+    for idx_s in range(0, len(lst), chunk_size):
+        list_s.append(lst[idx_s:idx_s+chunk_size])
+    return list_s
+
 
 def compute_states_on_30s(states_list, step):
     '''
-    Функция вычисляет количество тех или иных состояний (морганий, улыбок)
-    на 30с интервале времени
+    Функция вычисляет количество тех или иных состояний (морганий, улыбок) на интервале
     '''
     step_counts_list = []
     for idx_30s_chunk in range(0, len(states_list), step):
-        # если отрезок меньше 30 с, не считаем его
-        if len(states_list[idx_30s_chunk:idx_30s_chunk + step]) == step:
-            states_num = compute_states_num(states_list[idx_30s_chunk:idx_30s_chunk + step])
-            step_counts_list.append(states_num)
+        states_num = compute_states_num(states_list[idx_30s_chunk:idx_30s_chunk + step])
+        step_counts_list.append(states_num)
 
     return step_counts_list
+
 
 def compute_states_num(states):
     '''
@@ -68,6 +64,7 @@ def compute_states_num(states):
         state_cnt += 1
 
     return state_cnt
+
 
 def get_head_movs_num(head_position, fps):
     '''
