@@ -22,7 +22,7 @@ loader.load_torch_models()
 model_eye, model_smile, model_emot, model_cv = loader.get_models()
 
 # Пока что просто собираю все сегменты которые лежат в отдельной папки
-path_to_videos = "F:/Python/Data/Segments"
+path_to_videos = "F:/Python/Data/SegmentsA"
 video_list = [os.path.join(path_to_videos, name) for name in os.listdir(path_to_videos) if name.endswith(".mp4")]
 chunk_size = 30
 
@@ -42,16 +42,16 @@ def analyze_frame(cor):
 
 
 def analyze_video(v_num, cap, chunks_borders):
-    name_param = str(v_num) + "_video_parameters.json"
-    name_emot = str(v_num) + "_video_emotion_logits.json"
+    name_param = v_num + "_video_parameters.json"
+    name_emot = v_num + "_video_emotion_logits.json"
     segment_video_parameters = {}
     segment_video_emot_logits = {}
 
     segment_video_parameters["segment"] = {}
     segment_video_emot_logits["segment"] = {}
 
-    segment_video_parameters["segment"]["id"] = str(v_num)
-    segment_video_emot_logits["segment"]["id"] = str(v_num)
+    segment_video_parameters["segment"]["id"] = v_num
+    segment_video_emot_logits["segment"]["id"] = v_num
 
     chunk_param_list = []
     chunk_emot_list = []
@@ -84,30 +84,31 @@ def analyze_video(v_num, cap, chunks_borders):
 
         for frame_ind in range(frame_start, frame_end):
             if frame_ind == frame_start:
-                chunk_pram_dict["duration"] = (frame_end - frame_start) / fps
-                chunk_emot_dict["duration"] = (frame_end - frame_start) / fps
+                chunk_pram_dict["duration"] = chunk_len / fps
+                chunk_emot_dict["duration"] = chunk_len / fps
 
             ret, frame = cap.read()
-            cor = analyzer.get_face_borders(frame)
+            if frame is not None:
+                cor = analyzer.get_face_borders(frame)
             # Упрт проверка чтоб трекер не отрыгнуло
-            if cor[0] < 0:
-                cor[0] = 0
+                if cor[0] < 0:
+                    cor[0] = 0
 
-            analyzer.check_face(frame, cor)
-            # Если есть лицо передаем его моделям
-            if analyzer.face_detect:
-                centr, eye, smile, emot = analyze_frame(cor)
-                centrs.append(centr)
-                eye_predicts.append(eye)
-                smile_predicts.append(smile)
-                emot_predicts.append(emot)
+                analyzer.check_face(frame, cor)
+                # Если есть лицо передаем его моделям
+                if analyzer.face_detect:
+                    centr, eye, smile, emot = analyze_frame(cor)
+                    centrs.append(centr)
+                    eye_predicts.append(eye)
+                    smile_predicts.append(smile)
+                    emot_predicts.append(emot)
 
 
-                predicts.append({'head_pos': centr,
-                                 'emo_class': emot,
-                                 'blink': eye,
-                                 'smile': smile
-                                 })
+                    predicts.append({'head_pos': centr,
+                                     'emo_class': emot,
+                                     'blink': eye,
+                                     'smile': smile
+                                     })
 
         # Запись логов в исходном виде
         # log["frames_for_{}_chunk".format(str(chunk_count))] = predicts
@@ -142,7 +143,8 @@ def analyze_video(v_num, cap, chunks_borders):
 
 
 # Перебераем все видоса из списка. Каждый делится на чанкии анализируется полностью
-for num, video in enumerate(video_list):
+for video in video_list:
+    num = video.split("\\")[1].split("_")[0].split(".")[0]
     print("Analyze video number {}".format(num))
     prep = VideoPreparation(video, chunk_size)
     prep.make_chunks_borders()
