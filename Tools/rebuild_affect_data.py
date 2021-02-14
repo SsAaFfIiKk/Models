@@ -2,11 +2,13 @@ import os
 import cv2
 import csv
 
+
 path_to_dataset = "F:/Affect"
 csv_train_name = "training.csv"
 csv_valid_name = "validation.csv"
-path_to_save = "S:/Rebuild_affect"
+path_to_save = "S:/Rebuild_affect/train"
 training = os.path.join(path_to_dataset, csv_train_name)
+validation = os.path.join(path_to_dataset, csv_valid_name)
 
 emot_label = {
     0: "Neutral",
@@ -31,10 +33,16 @@ with open(training, 'r') as csvfile:
     reader = csv.DictReader(csvfile)
 
     for row in reader:
-        folder_name = row['subDirectory_filePath']
-        expression = int(row['expression'][0:])
+        folder_name = row["subDirectory_filePath"]
+        face_x = int(row["face_x"])
+        face_y = int(row["face_y"])
+        face_width = int(row["face_width"])
+        face_height = int(row["face_height"])
+        expression = int(row["expression"])
+
         if expression in emot_label:
             img = cv2.imread(os.path.join(path_to_dataset, folder_name))
+            img = img[face_y:face_height + 50, face_x:face_width + 30]
 
             if expression == 0:
                 cv2.imwrite(os.path.join(path_to_save, str(Neutral) + "_" + emot_label[expression]) + ".jpg", img)
