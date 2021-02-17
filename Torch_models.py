@@ -39,6 +39,7 @@ train_acc_list = []
 test_acc_list = []
 
 weights_folder = "vgg16"
+os.mkdir(weights_folder)
 # if os.path.exists(weights_folder):
 #     remove(weights_folder, "pth", "data")
 # else:
@@ -143,6 +144,6 @@ if __name__ == "__main__":
                    "_epoch_{}_correct_{}".format(epoch_idx, test_correct) + ".pth")
 
     save_list(weights_folder + "/" + weights_folder + "_train_los", train_los_list)
-    save_list(weights_folder + "/" + weights_folder + "res_train_acc", train_acc_list)
-    save_list(weights_folder + "/" + weights_folder + "res_test_los", test_los_list)
-    save_list(weights_folder + "/" + weights_folder + "res_test_acc", test_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_train_acc", train_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_los", test_los_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_acc", test_acc_list)

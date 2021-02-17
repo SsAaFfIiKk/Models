@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 def load_data(weights_folder):
     with open(weights_folder + "/" + weights_folder + "_train_los.data", "rb") as f:
         train_los_list = pickle.load(f)
-    with open(weights_folder + "/" + weights_folder + "_train_acc.data", "rb") as f:
+    with open(weights_folder + "/" + weights_folder + "res_train_acc.data", "rb") as f:
         train_acc_list = pickle.load(f)
-    with open(weights_folder + "/" + weights_folder + "_test_los.data", "rb") as f:
+    with open(weights_folder + "/" + weights_folder + "res_test_los.data", "rb") as f:
         test_los_list = pickle.load(f)
-    with open(weights_folder + "/" + weights_folder + "_test_acc.data", "rb") as f:
+    with open(weights_folder + "/" + weights_folder + "res_test_acc.data", "rb") as f:
         test_acc_list = pickle.load(f)
 
     x = list(range(len(train_acc_list)))
@@ -40,3 +40,5 @@ elif ind == 2:
     load_data("emot")
 elif ind == 3:
     load_data("res18")
+elif ind == 4:
+    load_data("vgg16")
