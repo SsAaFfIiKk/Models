@@ -1,4 +1,4 @@
-import torch
+import datetime
 from torch import nn
 from torchvision import models
 from torch.utils.data import Dataset
@@ -12,7 +12,7 @@ class EmotDataset(torch.utils.data.Dataset):
     #              "neutral": 2,
     #              "sad": 3,
     #              "fear": 4}
-    get_label = {"Anger": 0, "Happy": 1, "Neutral": 2, "Sad": 3, "Fear": 4, "Surprise":5, "Disgust":6, "Contempt": 7}
+    get_label = {"Anger": 0, "Happy": 1, "Neutral": 2, "Sad": 3, "Fear": 4, "Surprise": 5, "Disgust": 6, "Contempt": 7}
 
     def __init__(self, paths_to_images, transforms):
         self.paths_to_images = paths_to_images
@@ -38,23 +38,26 @@ test_los_list = []
 train_acc_list = []
 test_acc_list = []
 
-weights_folder = "res18A"
-if os.path.exists(weights_folder):
-    remove(weights_folder, "pth", "data")
-else:
-    os.mkdir(weights_folder)
+weights_folder = "vgg16"
+os.mkdir(weights_folder)
+# if os.path.exists(weights_folder):
+#     remove(weights_folder, "pth", "data")
+# else:
+#     os.mkdir(weights_folder)
 
-test_transform, train_transform = get_transform((64, 64))
+test_transform, train_transform = get_transform((224, 224))
 
-batch_size = 256
-epoch_num = 200
-
+batch_size = 64
+epoch_num = 250
 num_classes = 8
-feature_extract = True
 
-model = models.resnet18()
-num_ftrs = model.fc.in_features
-model.fc = nn.Linear(num_ftrs, num_classes)
+# feature_extract = True
+# model = models.resnet18()
+# num_ftrs = model.fc.in_features
+# model.fc = nn.Linear(num_ftrs, num_classes)
+
+model = models.vgg16_bn(pretrained=False, num_classes=num_classes)
+# model.classifier[6] = nn.Linear(4096, num_classes)
 
 path_to_train = "S:/Rebuild_affect/train"
 path_to_valid = "S:/Rebuild_affect/valid"
@@ -84,6 +87,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for epoch_idx in range(epoch_num):
+        print(datetime.datetime.now())
         print('Epoch #{}'.format(epoch_idx))
         model.train()
         train_correct = 0
@@ -136,10 +140,10 @@ if __name__ == "__main__":
             print('---------------------')
 
         print('Save')
-        torch.save(model, weights_folder + "/" + weights_folder + "_current_" +
-                   "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
+        torch.save(model, weights_folder + "/" + weights_folder +
+                   "_epoch_{}_correct_{}".format(epoch_idx, test_correct) + ".pth")
 
     save_list(weights_folder + "/" + weights_folder + "_train_los", train_los_list)
-    save_list(weights_folder + "/" + weights_folder + "res_train_acc", train_acc_list)
-    save_list(weights_folder + "/" + weights_folder + "res_test_los", test_los_list)
-    save_list(weights_folder + "/" + weights_folder + "res_test_acc", test_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_train_acc", train_acc_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_los", test_los_list)
+    save_list(weights_folder + "/" + weights_folder + "_test_acc", test_acc_list)

@@ -1,4 +1,4 @@
-import torch
+import datetime
 from torch import nn
 from torch.utils.data import Dataset
 from tools import *
@@ -50,7 +50,7 @@ class CNN(nn.Module):
 
         self.fc1 = nn.Linear(in_features=1024, out_features=256)
         self.fc2 = nn.Linear(in_features=256, out_features=64)
-        self.fc3 = nn.Linear(in_features=64, out_features=5)
+        self.fc3 = nn.Linear(in_features=64, out_features=8)
 
     def forward(self, x):
         h = self.conv1(x)
@@ -93,11 +93,12 @@ class CNN(nn.Module):
 
 class EmotDataset(torch.utils.data.Dataset):
     # Порядок такой же как и у Артёма
-    get_label = {"angry": 0,
-                 "happy": 1,
-                 "neutral": 2,
-                 "sad": 3,
-                 "fear": 4}
+    # get_label = {"angry": 0,
+    #              "happy": 1,
+    #              "neutral": 2,
+    #              "sad": 3,
+    #              "fear": 4}
+    get_label = {"Anger": 0, "Happy": 1, "Neutral": 2, "Sad": 3, "Fear": 4, "Surprise": 5, "Disgust": 6, "Contempt": 7}
 
     def __init__(self, paths_to_images, transforms):
         self.paths_to_images = paths_to_images
@@ -124,29 +125,34 @@ train_acc_list = []
 test_acc_list = []
 
 weights_folder = "emot"
-if os.path.exists(weights_folder):
-    remove(weights_folder, "pth", "data")
-else:
-    os.mkdir(weights_folder)
+# if os.path.exists(weights_folder):
+#     remove(weights_folder, "pth", "data")
+# else:
+#     os.mkdir(weights_folder)
 
 test_transform, train_transform = get_transform((64, 64))
 
-path_to_dataset = "F:/Python/Data/Emot"
-paths_to_images = [os.path.join(path_to_dataset, name)
-                   for name in os.listdir(path_to_dataset) if name.endswith('.jpg')]
+path_to_train = "S:/Rebuild_affect/train"
+path_to_valid = "S:/Rebuild_affect/valid"
+
+paths_to_train_images = [os.path.join(path_to_train, name)
+                         for name in os.listdir(path_to_train) if name.endswith('.jpg')]
+
+paths_to_valid_images = [os.path.join(path_to_valid, name)
+                         for name in os.listdir(path_to_valid) if name.endswith('.jpg')]
 
 random.seed(0)
-random.shuffle(paths_to_images)
+random.shuffle(paths_to_train_images)
+random.shuffle(paths_to_valid_images)
 
-train_size = int(0.8 * len(paths_to_images))
-batch_size = 256
-epoch_num = 200
+batch_size = 512
+epoch_num = 250
 
 if __name__ == "__main__":
-    train_dataset = EmotDataset(paths_to_images[:train_size], train_transform)
+    train_dataset = EmotDataset(paths_to_train_images, train_transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, num_workers=4, batch_size=batch_size, shuffle=True)
 
-    test_dataset = EmotDataset(paths_to_images[train_size:], test_transform)
+    test_dataset = EmotDataset(paths_to_valid_images, test_transform)
     test_loader = torch.utils.data.DataLoader(test_dataset, num_workers=4, batch_size=batch_size, shuffle=True)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -158,6 +164,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(cnn.parameters(), lr=0.001)
 
     for epoch_idx in range(epoch_num):
+        print(datetime.datetime.now())
         print('Epoch #{}'.format(epoch_idx))
         cnn.train()
         train_correct = 0
@@ -210,9 +217,8 @@ if __name__ == "__main__":
             print('---------------------')
 
         print('Save')
-        torch.save(cnn, weights_folder + "/" + weights_folder + "_current_" +
-                       "epoch_{}, loss_{}, correct_{}".format(epoch_idx, test_loss, test_correct) + ".pth")
-
+        torch.save(cnn, weights_folder + "/" + weights_folder +
+                   "_epoch_{}_correct_{}".format(epoch_idx, test_correct) + ".pth")
 
     save_list(weights_folder + "/" + weights_folder + "_train_los", train_los_list)
     save_list(weights_folder + "/" + weights_folder + "_train_acc", train_acc_list)
