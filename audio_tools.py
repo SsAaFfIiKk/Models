@@ -10,13 +10,12 @@ from torchvision.transforms import transforms
 def chunkizer(audio, chunk_length, sr=48000, trim_threshold=2):
     num_chunks = ceil(librosa.get_duration(audio, sr=sr) / chunk_length)
     chunks = []
-    for i in range (num_chunks):
-        chunks.append(audio[i*chunk_length*sr : (i+1)*chunk_length*sr])
+    for i in range(num_chunks):
+        chunks.append(audio[i*chunk_length*sr:(i+1)*chunk_length*sr])
     if trim_threshold:
         if len(chunks[-1]) <= trim_threshold*sr:
             chunks = chunks[:-1]
     return chunks
-
 
 
 def load_model(model, path_to_weights, device):
@@ -38,10 +37,10 @@ def zero_pad(spec):
     return spec_z
 
 
-def scale_minmax(X, min=0.0, max=1.0):
-    X_std = (X - X.min()) / (X.max() - X.min())
-    X_scaled = X_std * (max - min) + min
-    return X_scaled
+def scale_minmax(x, mn=0.0, mx=1.0):
+    x_std = (x - x.min()) / (x.max() - x.min())
+    x_scaled = x_std * (mx - mn) + mn
+    return x_scaled
 
 
 def get_logits(audio, model, device):
@@ -60,7 +59,7 @@ def get_logits(audio, model, device):
     output_logits = model(v_img).detach().numpy()[0].tolist()
     return output_logits
 
+
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5], std=[0.225])
-])
+    transforms.Normalize(mean=[0.5], std=[0.225])])

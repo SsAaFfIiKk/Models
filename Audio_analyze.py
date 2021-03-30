@@ -1,9 +1,11 @@
 import os
+import datetime
 import pandas as pd
 import soundfile as sf
 from audio_tools import *
 from Models import EmoAlex
-
+import warnings
+warnings.filterwarnings("ignore")
 
 sr = 48000
 emotion_labels = {
@@ -29,9 +31,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = EmoAlex()
 model = load_model(model, path_to_weights, device)
 
+print("Load audio")
+print(datetime.datetime.now())
 audio, _ = librosa.load(path_to_file, sr)
+
+print("Start spliting")
+print(datetime.datetime.now())
 chunks = chunkizer(audio, 3)
 
+print("Start analyze chunks")
+print(datetime.datetime.now())
 for ind, chunk in enumerate(chunks):
 
     file_name = os.path.join(path_to_save, str(ind) + ".wav")
@@ -41,6 +50,8 @@ for ind, chunk in enumerate(chunks):
     # print(emotion_labels[np.argmax(logit)])
 
     class_number = np.argmax(logit)
+    log["Confidence"].append(round(logit[class_number], ndigits=3))
+
     if class_number == 4:
         class_number = 2
     class_name = emotion_labels[class_number]
@@ -48,7 +59,9 @@ for ind, chunk in enumerate(chunks):
     log["Path_to_file"].append(file_name)
     log["File_ind"].append(ind)
     log["Predict"].append(class_name)
-    log["Confidence"].append(round(logit[class_number], ndigits=3))
 
 df = pd.DataFrame(data=log)
-df.to_csv("F:/Python/Data/Audio/log.csv", sep=",", index=False)
+print("Save logs")
+print(datetime.datetime.now())
+# df.to_csv("F:/Python/Data/Audio/log.csv", sep=",", index=False)
+print("Done")
