@@ -56,8 +56,11 @@ def get_logits(audio, model, device):
     u_img = t_img.unsqueeze(0)
     v_img = Variable(u_img)
     v_img = v_img.to(device)
-    output_logits = model(v_img).detach().numpy()[0].tolist()
-    return output_logits
+    output = model(v_img)
+    output_cpu = output.to("cpu")
+    output_lst = output_cpu.detach().numpy()[0].tolist()
+    output_lst[2] = output_lst[4]
+    return output_lst[:4]
 
 
 transform = transforms.Compose([

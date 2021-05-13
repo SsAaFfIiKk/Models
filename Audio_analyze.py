@@ -1,29 +1,31 @@
-import os
+import torch
+import librosa
 import datetime
 import pandas as pd
-import soundfile as sf
-from audio_tools import *
+import numpy as np
+from audio_tools import chunkizer, get_logits, load_model
 from Models import EmoAlex
 import warnings
 warnings.filterwarnings("ignore")
 
-sr = 48000
+start = 0
+end = 3
+step = 1
+
 emotion_labels = {
     0: "Angry",
     1: "Happy",
     2: "Neutral",
     3: "Sad",
-    4: "Scared"
 }
 
 log = {
-    "Path_to_file": [],
-    "File_ind": [],
+    "Chunk_ind": [],
     "Predict": [],
     "Confidence": []
 }
 
-path_to_file = "F:/Python/Data/Audio/audio_only_ivan.m4a"
+path_to_file = "F:/Python/Data/demo/audio_only_ivan.m4a"
 path_to_weights = "F:/Python/Data/model_data/AlexNet.pt"
 path_to_save = "F:/Python/Data/Audio/segments"
 
@@ -33,35 +35,29 @@ model = load_model(model, path_to_weights, device)
 
 print("Load audio")
 print(datetime.datetime.now())
-audio, _ = librosa.load(path_to_file, sr)
+audio, _ = librosa.load(path_to_file, 48000)
 
 print("Start spliting")
 print(datetime.datetime.now())
-chunks = chunkizer(audio, 3)
+chunks = chunkizer(audio, 1)
 
-print("Start analyze chunks")
-print(datetime.datetime.now())
-for ind, chunk in enumerate(chunks):
+for ind in range(len(chunks)):
 
-    file_name = os.path.join(path_to_save, str(ind) + ".wav")
-    sf.write(file_name, chunk, sr, "PCM_24")
-
+    chunk = np.hstack(chunks[start:end])
     logit = get_logits(chunk, model, device)
-    # print(emotion_labels[np.argmax(logit)])
 
     class_number = np.argmax(logit)
     log["Confidence"].append(round(logit[class_number], ndigits=3))
 
-    if class_number == 4:
-        class_number = 2
     class_name = emotion_labels[class_number]
 
-    log["Path_to_file"].append(file_name)
-    log["File_ind"].append(ind)
+    log["Chunk_ind"].append(ind)
     log["Predict"].append(class_name)
+    start += step
+    end += step
 
 df = pd.DataFrame(data=log)
 print("Save logs")
 print(datetime.datetime.now())
-# df.to_csv("F:/Python/Data/Audio/log.csv", sep=",", index=False)
+# df.to_csv("F:/Python/Data/Audio/logv2.csv", sep=",", index=False)
 print("Done")
